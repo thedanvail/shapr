@@ -127,8 +127,12 @@ Per-face normals are recomputed from the cross product of the triangle edges rat
 17 tests across 5 suites using Catch2:
 
 `ArgParserTests` - Flag parsing, key-value args, edge cases
+
 `MeshAnalyzerTests` - Surface area, volume, inside/outside on a unit cube
+
 `ObjReaderTests` - Valid OBJ load, malformed input exception
+
 `StlWriterTests` - Output size, header, triangle count
+
 `MeshConverterTests` - Full conversion, unknown reader/writer exceptions
 
