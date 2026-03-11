@@ -48,6 +48,12 @@ namespace
         const uint32_t v = ToLittleEndian(aValue);
         aStream.write(reinterpret_cast<const char*>(&v), sizeof(uint32_t));
     }
+
+    void WriteUint16(std::ostream& aStream, uint16_t aValue)
+    {
+        const uint16_t v = ToLittleEndian(aValue);
+        aStream.write(reinterpret_cast<const char*>(&v), sizeof(uint16_t));
+    }
 } // namespace
 
 void StlWriter::Write(std::ostream& aStream, const Mesh& aMesh) const
@@ -65,7 +71,7 @@ void StlWriter::Write(std::ostream& aStream, const Mesh& aMesh) const
     char header[kHeaderSize] = {};
     aStream.write(header, kHeaderSize);
 
-    WriteUint32(aStream, (uint32_t)aMesh.triangles.size());
+    WriteUint32(aStream, static_cast<uint32_t>(aMesh.triangles.size()));
 
     for(const auto& tri : aMesh.triangles)
     {
@@ -83,6 +89,6 @@ void StlWriter::Write(std::ostream& aStream, const Mesh& aMesh) const
 
         // attribute byte count, always 0
         const uint16_t attr = 0;
-        aStream.write(reinterpret_cast<const char*>(&attr), sizeof(uint16_t));
+        WriteUint16(aStream, attr);
     }
 }

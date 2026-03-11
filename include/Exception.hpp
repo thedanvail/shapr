@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <string>
 
 class NoRegisteredReader : public std::runtime_error
 {
@@ -15,6 +16,24 @@ class NoRegisteredWriter : public std::runtime_error
 {
 public:
     explicit NoRegisteredWriter(const std::string& aErrorMsg)
+        : std::runtime_error(aErrorMsg)
+    {
+    }
+};
+
+class DuplicateRegisteredReader : public std::runtime_error
+{
+public:
+    explicit DuplicateRegisteredReader(const std::string& aErrorMsg)
+        : std::runtime_error(aErrorMsg)
+    {
+    }
+};
+
+class DuplicateRegisteredWriter : public std::runtime_error
+{
+public:
+    explicit DuplicateRegisteredWriter(const std::string& aErrorMsg)
         : std::runtime_error(aErrorMsg)
     {
     }
@@ -38,10 +57,19 @@ public:
     }
 };
 
-class Vec3ParseError : public std::runtime_error
+class CliInputParseError : public std::runtime_error
 {
 public:
-    explicit Vec3ParseError(const std::string& aErrorMsg)
+    explicit CliInputParseError(const std::string& aErrorMsg)
+        : std::runtime_error(aErrorMsg)
+    {
+    }
+};
+
+class ZeroRotationAxisError : public std::runtime_error
+{
+public:
+    explicit ZeroRotationAxisError(const std::string& aErrorMsg)
         : std::runtime_error(aErrorMsg)
     {
     }

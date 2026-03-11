@@ -4,7 +4,6 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
-#include <iostream>
 #include <tuple>
 #include <unordered_map>
 
@@ -27,6 +26,21 @@ namespace
             return h;
         }
     };
+
+    bool IsVertexIndexValid(int aIndex, size_t aVertexFloatCount)
+    {
+        return aIndex >= 0 && (static_cast<size_t>(aIndex) * 3 + 2) < aVertexFloatCount;
+    }
+
+    bool IsNormalIndexValid(int aIndex, size_t aNormalFloatCount)
+    {
+        return aIndex < 0 || (static_cast<size_t>(aIndex) * 3 + 2) < aNormalFloatCount;
+    }
+
+    bool IsTexcoordIndexValid(int aIndex, size_t aTexcoordFloatCount)
+    {
+        return aIndex < 0 || (static_cast<size_t>(aIndex) * 2 + 1) < aTexcoordFloatCount;
+    }
 } // namespace
 
 Mesh ObjReader::Read(std::istream& aStream) const
@@ -43,7 +57,7 @@ Mesh ObjReader::Read(std::istream& aStream) const
 
     if(!warn.empty())
     {
-        std::cerr << "OBJ warning: " << warn << std::endl;
+        throw ObjParseError{"OBJ parse warning: " + warn};
     }
 
     Mesh mesh;
@@ -56,6 +70,10 @@ Mesh ObjReader::Read(std::istream& aStream) const
     {
         mesh.texcoords = std::vector<glm::vec2>{};
     }
+
+    bool hasMissingNormals = false;
+    bool hasMissingTexcoords = false;
+
     std::unordered_map<std::tuple<int, int, int>, uint32_t, IndexHash> indexMap;
     indexMap.reserve(attrib.vertices.size() / 3);
 
@@ -67,6 +85,10 @@ Mesh ObjReader::Read(std::istream& aStream) const
     {
         for(const auto nv : shape.mesh.num_face_vertices)
         {
+            if(nv < 3)
+            {
+                throw ObjParseError{"Face has fewer than 3 vertices: " + std::to_string(nv)};
+            }
             totalTris += nv - 2;
         }
     }
@@ -107,13 +129,26 @@ Mesh ObjReader::Read(std::istream& aStream) const
 
                     // Discovered during tests that tinyobjloader will not validate any indices,
                     // which makes sense, but today I learned. Bounds check!
-                    if(idx.vertex_index < 0 || (idx.vertex_index * 3 + 2) >= (int)attrib.vertices.size())
+                    if(!IsVertexIndexValid(idx.vertex_index, attrib.vertices.size()))
                     {
                         throw ObjParseError{"Vertex index out of bounds: " + std::to_string(idx.vertex_index)};
                     }
 
+                    if(!IsNormalIndexValid(idx.normal_index, attrib.normals.size()))
+                    {
+                        throw ObjParseError{"Normal index out of bounds: " + std::to_string(idx.normal_index)};
+                    }
+
+                    if(!IsTexcoordIndexValid(idx.texcoord_index, attrib.texcoords.size()))
+                    {
+                        throw ObjParseError{"Texcoord index out of bounds: " + std::to_string(idx.texcoord_index)};
+                    }
+
+                    hasMissingNormals = hasMissingNormals || (idx.normal_index < 0);
+                    hasMissingTexcoords = hasMissingTexcoords || (idx.texcoord_index < 0);
+
                     const auto key = std::make_tuple(idx.vertex_index, idx.normal_index, idx.texcoord_index);
-                    const auto [it, inserted] = indexMap.emplace(key, (uint32_t)mesh.vertices.size());
+                    const auto [it, inserted] = indexMap.emplace(key, static_cast<uint32_t>(mesh.vertices.size()));
 
                     if(inserted)
                     {
@@ -143,6 +178,16 @@ Mesh ObjReader::Read(std::istream& aStream) const
 
             indexOffset += faceVerts;
         }
+    }
+
+    if(hasMissingNormals)
+    {
+        mesh.normals.reset();
+    }
+
+    if(hasMissingTexcoords)
+    {
+        mesh.texcoords.reset();
     }
 
     return mesh;

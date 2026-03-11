@@ -64,7 +64,7 @@ Writers and readers are registered to the MeshConverter and then used based on r
 IMeshReader ──> MeshConverter ──> IMeshWriter
 ```
 
-`MeshConverter` maintains two `std::unordered_map` registries keyed by format name. Format names are inferred from file extensions at the CLI level, so the converter itself has no knowledge of the filesystem.
+`MeshConverter` maintains two `std::unordered_map` registries keyed by normalized format name. Format names are inferred from file extensions at the CLI level, and lookups are case-insensitive (`obj`, `OBJ`, and `Obj` are treated the same), so the converter itself has no knowledge of the filesystem.
 
 ### Internal Representation
 
@@ -114,25 +114,45 @@ Uses the signed tetrahedron method (divergence theorem): for each triangle, comp
 
 ### OBJ → Binary STL
 
-OBJ faces are arbitrary convex n-gons. Fan triangulation is used: fix vertex 0 and emit triangles `(v0, v[i], v[i+1])` for `i = 1..n-2`. This is correct for convex faces.
+Fan triangulation is used: fix vertex 0 and emit triangles `(v0, v[i], v[i+1])` for `i = 1..n-2`.
 
 Vertices are deduplicated via an `std::unordered_map` keyed on `(vertex_index, normal_index, texcoord_index)`. The hash uses the boost::hash_combine technique to avoid collisions between permutations that naive XOR would treat as identical.
+
+OBJ parser warnings from tinyobjloader are treated as parse failures (`ObjParseError`) rather than being printed to stderr. This keeps the library behavior deterministic and avoids hidden global output side effects.
 
 Binary STL is written as: 80-byte zero header, `uint32` triangle count, then 50 bytes per triangle (12-byte normal, three 12-byte vertices, 2-byte attribute count). All values are written in little-endian byte order with compile-time endian detection via `std::endian`.
 
 Per-face normals are recomputed from the cross product of the triangle edges rather than using mesh normals, matching the STL convention of one normal per face.
 
+## Known Limitations
+- `--inside` uses ray casting with epsilon-based intersection tests. Points exactly on the surface/edges are numerically ambiguous and may be classified inconsistently.
+- `--inside` currently does a linear triangle scan per ray (3 rays per query), so point containment is O(triangle_count). For very large meshes or high query volume, a BVH/spatial acceleration structure would be needed.
+- Surface area and volume calculations assume a valid triangle mesh; volume is only meaningful for watertight, consistently oriented geometry.
+- OBJ face triangulation uses fan triangulation and assumes convex planar n-gons.
+- OBJ inputs that include parser warnings or degenerate faces (`< 3` vertices) are rejected with `ObjParseError` (strict validation).
+- The converter currently supports OBJ input and binary STL output only (as specified in the take-home task).
+- Floating-point math uses single precision (`float`), so very large/small coordinate ranges may accumulate numerical error.
+
+## Future Work (theoretical)
+I thought about implementing a BVH for point-containment acceleration, but chose not to include it in this submission due to scope and timeline. 
+The current `IsInside` implementation works for the scope of a take-home task I think, but it is O(triangle count) per ray (with three rays per query, so O(3*triangle count)), 
+so it is not the best fit for very large meshes or high query volume. Given the deadline, I prioritized correctness, test coverage, and good architecture over adding a 
+rushed optimization. The existing design keeps this upgrade path clear: replace linear triangle scans with BVH traversal inside of `MeshAnalyzer` without changing external behavior.
+
 ## Testing
 
-17 tests across 5 suites using Catch2:
+32 tests across 7 suites using Catch2:
 
-`ArgParserTests` - Flag parsing, key-value args, edge cases
+`ArgParserTests` - Flag parsing, key-value arguments, and edge cases
 
 `MeshAnalyzerTests` - Surface area, volume, inside/outside on a unit cube
 
-`ObjReaderTests` - Valid OBJ load, malformed input exception
+`ObjReaderTests` - Valid OBJ load, malformed input exceptions, index bounds checks, mixed normal handling, degenerate face rejection
 
-`StlWriterTests` - Output size, header, triangle count
+`StlWriterTests` - Output size, header, triangle count, and first triangle binary payload checks
 
-`MeshConverterTests` - Full conversion, unknown reader/writer exceptions
+`MeshConverterTests` - Full conversion, translated STL vertex checks, unknown format exceptions, duplicate registration guards, case-insensitive format lookup
 
+`CLITests` - End-to-end CLI error handling for invalid transform/inside inputs, including zero-axis rotation
+
+`TransformTests` - Translate/scale/rotate correctness, transform order behavior, zero-axis rotation guard

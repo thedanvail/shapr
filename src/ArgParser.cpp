@@ -6,25 +6,12 @@
 
 static inline bool IsFlag(const char* apArg) { return apArg != nullptr && strncmp(apArg, "--", 2) == 0; }
 
-ArgParser& ArgParser::GetInstance()
-{
-    static ArgParser instance;
-    return instance;
-}
-
-void ArgParser::Init(const int argc, const char* argv[]) noexcept
+ArgParser::ArgParser(int argc, const char* argv[]) noexcept
 {
     if(argc <= 1)
     {
         return;
     }
-
-    ArgParser& instance = GetInstance();
-    if(instance.m_hasBeenInitialized)
-    {
-        return;
-    }
-    instance.m_hasBeenInitialized = true;
 
     for(int i = 1; i < argc; ++i)
     {
@@ -35,22 +22,14 @@ void ArgParser::Init(const int argc, const char* argv[]) noexcept
 
         if((i + 1) < argc && !IsFlag(argv[i + 1]))
         {
-            instance.m_args.emplace(argv[i], argv[i + 1]);
+            m_args.emplace(argv[i], argv[i + 1]);
             ++i; // Skip the associated value
         }
         else
         {
-            instance.m_flags.emplace(argv[i]);
+            m_flags.emplace(argv[i]);
         }
     }
-}
-
-void ArgParser::Reset() noexcept
-{
-    ArgParser& instance = GetInstance();
-    instance.m_hasBeenInitialized = false;
-    instance.m_flags.clear();
-    instance.m_args.clear();
 }
 
 [[nodiscard]] std::optional<std::string_view> ArgParser::GetArgValue(std::string_view aArg) const

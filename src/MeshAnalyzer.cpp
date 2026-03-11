@@ -90,9 +90,14 @@ bool MeshAnalyzer::IsInside(const Mesh& aMesh, glm::vec3 aPoint)
     return collisions >= 2;
 }
 
+/*
+ * There's a bit of back-and-forth with doubles and floats here, and the goal
+ * was to try to minimize any floating point errors. To that end, everything is
+ * treated as a double until a float is needed.
+ */
 float MeshAnalyzer::SurfaceArea(const Mesh& aMesh)
 {
-    float surfaceArea = 0.0f;
+    double surfaceArea = 0.0;
     for(const std::array<uint32_t, 3>& triangle : aMesh.triangles)
     {
         const glm::vec3& v0 = aMesh.vertices[triangle[0]];
@@ -102,21 +107,22 @@ float MeshAnalyzer::SurfaceArea(const Mesh& aMesh)
         const auto edge1 = v1 - v0;
         const auto edge2 = v2 - v0;
 
-        surfaceArea += glm::length(glm::cross(edge1, edge2)) / 2.0f;
+        surfaceArea += static_cast<double>(glm::length(glm::cross(edge1, edge2))) / 2.0;
     }
-    return surfaceArea;
+    return static_cast<float>(surfaceArea);
 }
 
+// Same comment as for `SurfaceArea`.
 float MeshAnalyzer::Volume(const Mesh& aMesh)
 {
-    float volume = 0.0f;
+    double volume = 0.0;
     for(const auto& triangle : aMesh.triangles)
     {
         const glm::vec3& v0 = aMesh.vertices[triangle[0]];
         const glm::vec3& v1 = aMesh.vertices[triangle[1]];
         const glm::vec3& v2 = aMesh.vertices[triangle[2]];
 
-        volume += glm::dot(v0, glm::cross(v1, v2)) / 6.0f;
+        volume += static_cast<double>(glm::dot(v0, glm::cross(v1, v2))) / 6.0;
     }
-    return std::abs(volume);
+    return static_cast<float>(std::abs(volume));
 }

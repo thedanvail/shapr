@@ -1,5 +1,7 @@
 #include "Transform.hpp"
 
+#include "Exception.hpp"
+
 #include <glm/gtc/matrix_transform.hpp>
 
 Transform& Transform::Translate(glm::vec3 aTranslation)
@@ -10,6 +12,10 @@ Transform& Transform::Translate(glm::vec3 aTranslation)
 
 Transform& Transform::Rotate(float aAngle, glm::vec3 aAxis)
 {
+    if(glm::dot(aAxis, aAxis) <= 1e-12f)
+    {
+        throw ZeroRotationAxisError{"Rotation axis must be non-zero."};
+    }
     m_matrix = glm::rotate(m_matrix, aAngle, aAxis);
     return *this;
 }

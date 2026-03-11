@@ -9,24 +9,19 @@
 class ArgParser
 {
 public:
-    static void Init(const int argc, const char* argv[]) noexcept;
-    static void Reset() noexcept;
-    static ArgParser& GetInstance();
-
+    explicit ArgParser(int argc, const char* argv[]) noexcept;
     ~ArgParser() = default;
-    ArgParser(const ArgParser&) = delete;
-    ArgParser(ArgParser&&) = delete;
-    ArgParser& operator=(const ArgParser&) = delete;
-    ArgParser& operator=(ArgParser&&) = delete;
+    ArgParser(const ArgParser&) = default;
+    ArgParser(ArgParser&&) = default;
+    ArgParser& operator=(const ArgParser&) = default;
+    ArgParser& operator=(ArgParser&&) = default;
 
     [[nodiscard]] std::optional<std::string_view> GetArgValue(std::string_view aArg) const;
     [[nodiscard]] bool HasFlag(std::string_view aArg) const;
 
 private:
-    ArgParser() = default;
     void PrependHyphen(std::string& aArg) const;
 
-    bool m_hasBeenInitialized = false;
     std::unordered_map<std::string, std::string> m_args;
     std::unordered_set<std::string> m_flags;
 };

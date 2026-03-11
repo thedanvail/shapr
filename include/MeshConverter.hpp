@@ -10,6 +10,27 @@
 #include <string_view>
 #include <unordered_map>
 
+namespace StringFunctors
+{
+    /*
+     * Instead of using another string allocation to see if a key
+     * is in an unordered map, I'm electing to use these functors
+     * to allow the STL to accept string_views and anything that can
+     * be implicitly converted to such.
+     */
+    struct TransparentStringHashFunctor
+    {
+        using is_transparent = void;
+        size_t operator()(std::string_view s) const noexcept { return std::hash<std::string_view>{}(s); }
+    };
+
+    struct TransparentStringEqualFunctor
+    {
+        using is_transparent = void;
+        bool operator()(std::string_view a, std::string_view b) const noexcept { return a == b; }
+    };
+} // namespace StringFunctors
+
 class MeshConverter
 {
 public:
@@ -30,6 +51,15 @@ public:
                                const Transform& aTransform = Transform{}) const;
 
 private:
-    std::unordered_map<std::string, std::unique_ptr<IMeshReader>> m_readers;
-    std::unordered_map<std::string, std::unique_ptr<IMeshWriter>> m_writers;
+    std::unordered_map<std::string,
+                       std::unique_ptr<IMeshReader>,
+                       StringFunctors::TransparentStringHashFunctor,
+                       StringFunctors::TransparentStringEqualFunctor>
+        m_readers;
+
+    std::unordered_map<std::string,
+                       std::unique_ptr<IMeshWriter>,
+                       StringFunctors::TransparentStringHashFunctor,
+                       StringFunctors::TransparentStringEqualFunctor>
+        m_writers;
 };

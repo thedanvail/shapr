@@ -24,7 +24,7 @@ release:
 
 # --- Tests ---
 
-test: format build
+test: build
 	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
 # --- Format ---
