@@ -19,7 +19,9 @@ All dependencies are vendored under `vendor/`
 
 Libraries used:
 [GLM](https://github.com/g-truc/glm) - Vector/matrix math
+
 [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) - OBJ parsing
+
 [Catch2](https://github.com/catchorg/Catch2) - Testing framework
 
 ## Building
@@ -99,7 +101,7 @@ struct Mesh {
 
 Uses ray casting: fire a ray from the query point and count how many times it intersects the mesh surface. An odd count means inside; even means outside.
 
-The naive approach is fragile — a ray that passes exactly through a shared edge between two triangles gets counted twice, producing a false "outside" result. Two mitigations are applied:
+The naive approach is fragile. A ray that passes exactly through a shared edge between two triangles gets counted twice, producing a false "outside" result. Two mitigations are applied:
 
 1. **Möller–Trumbore intersection** with an epsilon guard on the `t` parameter, rejecting intersections behind the ray origin.
 2. **Majority vote across three rays** with asymmetric direction perturbations `{1, 1e-4, 2e-4}`, `{3e-4, 1, 1e-4}`, `{2e-4, 3e-4, 1}`. The directions are intentionally not symmetric (e.g. not `{1, 1e-4, 1e-4}`) to avoid hitting shared diagonals in axis-aligned meshes. A point is considered inside if at least 2 of 3 rays agree.
