@@ -124,6 +124,11 @@ Binary STL is written as: 80-byte zero header, `uint32` triangle count, then 50 
 
 Per-face normals are recomputed from the cross product of the triangle edges rather than using mesh normals, matching the STL convention of one normal per face.
 
+## LLM Use Disclosure
+I used two LLM models (Claude Sonnet 4.6 and GPT 5.3 Codex) as paired programmers/reviewers for design discussions, code review feedback, and documentation polish.  
+All implementation decisions, code creation, and design choices were performed by me. No external proprietary source code was copied into this submission (aside from the approved libraries under `vendor`).
+This style of LLM-assisted (but not LLM-driven) development reflects how I program these days, and it seems valuable to outline how I integrate these tools into my workflow.
+
 ## Known Limitations
 - `--inside` uses ray casting with epsilon-based intersection tests. Points exactly on the surface/edges are numerically ambiguous and may be classified inconsistently.
 - `--inside` currently does a linear triangle scan per ray (3 rays per query), so point containment is O(triangle_count). For very large meshes or high query volume, a BVH/spatial acceleration structure would be needed.
@@ -141,7 +146,7 @@ rushed optimization. The existing design keeps this upgrade path clear: replace 
 
 ## Testing
 
-32 tests across 7 suites using Catch2:
+36 tests across 7 suites using Catch2:
 
 `ArgParserTests` - Flag parsing, key-value arguments, and edge cases
 
@@ -153,6 +158,6 @@ rushed optimization. The existing design keeps this upgrade path clear: replace 
 
 `MeshConverterTests` - Full conversion, translated STL vertex checks, unknown format exceptions, duplicate registration guards, case-insensitive format lookup
 
-`CLITests` - End-to-end CLI error handling for invalid transform/inside inputs, including zero-axis rotation
+`CLITests` - End-to-end happy/unhappy path coverage: full pipeline success, invalid transform/inside inputs, missing input, unknown format, and output path failures
 
 `TransformTests` - Translate/scale/rotate correctness, transform order behavior, zero-axis rotation guard
