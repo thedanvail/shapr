@@ -18,6 +18,7 @@ If you utilize clangd for your coding setup, you can run `make configure` to gen
 All dependencies are vendored under `vendor/`
 
 Libraries used:
+
 [GLM](https://github.com/g-truc/glm) - Vector/matrix math
 
 [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader) - OBJ parsing
