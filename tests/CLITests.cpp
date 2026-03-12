@@ -115,6 +115,25 @@ TEST_CASE("CLI - missing input returns error")
 
     REQUIRE(result.returnCode == 1);
     REQUIRE(result.stderrText.find("please provide an input file") != std::string::npos);
+    REQUIRE(result.stdoutText.find("Usage: shapr --input <path> [options]") != std::string::npos);
+}
+
+TEST_CASE("CLI - help flag prints help and succeeds")
+{
+    const CliResult result = RunCli({"shapr", "--help"});
+
+    REQUIRE(result.returnCode == 0);
+    REQUIRE(result.stderrText.empty());
+    REQUIRE(result.stdoutText.find("Usage: shapr --input <path> [options]") != std::string::npos);
+}
+
+TEST_CASE("CLI - unknown flag returns error and help")
+{
+    const CliResult result = RunCli({"shapr", "--banana"});
+
+    REQUIRE(result.returnCode == 1);
+    REQUIRE(result.stderrText.find("unknown flag: --banana") != std::string::npos);
+    REQUIRE(result.stdoutText.find("Usage: shapr --input <path> [options]") != std::string::npos);
 }
 
 TEST_CASE("CLI - unknown format extension returns no-reader error")
@@ -140,4 +159,12 @@ TEST_CASE("CLI - output path open failure returns error")
 
     REQUIRE(result.returnCode == 1);
     REQUIRE(result.stderrText.find("could not open output file") != std::string::npos);
+}
+
+TEST_CASE("CLI - output to non-existent directory returns error")
+{
+    const CliResult result = RunCli({"shapr", "--input", "test_files/test_cube.obj", "--output", "nonexistent_dir/output.stl"});
+
+    REQUIRE(result.returnCode == 1);
+    REQUIRE(result.stderrText.find("Destination folder does not exist") != std::string::npos);
 }

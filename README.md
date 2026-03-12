@@ -149,7 +149,7 @@ rushed optimization. The existing design keeps this upgrade path clear: replace 
 
 ## Testing
 
-36 tests across 7 suites using Catch2:
+39 tests across 7 suites using Catch2. Run tests with `make test`.
 
 `ArgParserTests` - Flag parsing, key-value arguments, and edge cases
 
@@ -161,6 +161,6 @@ rushed optimization. The existing design keeps this upgrade path clear: replace 
 
 `MeshConverterTests` - Full conversion, translated STL vertex checks, unknown format exceptions, duplicate registration guards, case-insensitive format lookup
 
-`CLITests` - End-to-end happy/unhappy path coverage: full pipeline success, invalid transform/inside inputs, missing input, unknown format, and output path failures
+`CLITests` - End-to-end happy/unhappy path coverage: full pipeline success, invalid transform/inside inputs, missing input, unknown format, output path failures, and output directory validation
 
 `TransformTests` - Translate/scale/rotate correctness, transform order behavior, zero-axis rotation guard

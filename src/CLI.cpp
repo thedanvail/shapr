@@ -46,6 +46,19 @@ int CLI::Run(int argc, const char* argv[])
     {
         ArgParser args(argc, argv);
 
+        if(const auto unknownFlag = args.GetFirstUnknownFlag())
+        {
+            std::cerr << "Error: unknown flag: " << *unknownFlag << std::endl;
+            args.DisplayHelpMenu();
+            return 1;
+        }
+
+        if(args.HasFlag("help"))
+        {
+            args.DisplayHelpMenu();
+            return 0;
+        }
+
         std::filesystem::path inputPath;
         if(const auto& path = args.GetArgValue("input"))
         {
@@ -55,6 +68,7 @@ int CLI::Run(int argc, const char* argv[])
         if(inputPath.empty())
         {
             std::cerr << "Error: please provide an input file." << std::endl;
+            args.DisplayHelpMenu();
             return 1;
         }
 
@@ -115,6 +129,15 @@ int CLI::Run(int argc, const char* argv[])
         if(outputPath)
         {
             std::filesystem::path outputFilePath{std::string{*outputPath}};
+
+            // Check if the parent directory exists
+            auto parentPath = outputFilePath.parent_path();
+            if(!parentPath.empty() && !std::filesystem::exists(parentPath))
+            {
+                std::cerr << "Error: Destination folder does not exist. Please provide an existing output directory or just the output file name if you want the file created in this directory." << std::endl;
+                return 1;
+            }
+
             std::ofstream outputFile{outputFilePath.string(), std::ios::binary};
 
             if(!outputFile.good())
